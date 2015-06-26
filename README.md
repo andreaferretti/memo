@@ -56,7 +56,7 @@ Restrictions
 * one can only memoize functions of a single argument, altough one can convert any function in this form by using a tuple argument
 * the argument type has to implement ``hash``, since it will be used as key in a hashtable
 
-An example of the first issue would be memoizing the Levenshtein distance for strings, as it is a function of two arguments. It cna be done like this:
+An example of the first issue would be memoizing the Levenshtein distance for strings, as it is a function of two arguments. It can be done like this:
 
     import memo
 
