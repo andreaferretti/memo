@@ -14,12 +14,13 @@ proc memoize*[A, B](f: proc(a: A): B): proc(a: A): B =
 
 macro memoized*(e: expr): stmt =
   
-  template memoTemplate(n, nType, retType, procName, procBody : expr): stmt =
-    var cache = initTable[nType,retType]()
-    proc procName(n : nType) : retType
-    proc funName(n : nType) : retType {.gensym.} =
+  template memoTemplate(n, nT, retType, procName, procBody : expr): stmt =
+    var cache = initTable[nT,retType]()
+    when not declared(procName):
+      proc procName(n : nT) : retType
+    proc funName(n : nT) : retType {.gensym.} =
       procBody
-    proc procName(n : nType) : retType =
+    proc procName(n : nT) : retType =
       if not cache.hasKey(n):
         cache[n] = funName(n)
       return cache[n]
@@ -27,6 +28,7 @@ macro memoized*(e: expr): stmt =
   let
     retType = e.params()[0]
     param   = e.params()[1]
-  getAst(memoTemplate(param[0], param[1], retType, e.name(), e.body()))
+    (n, nT) = (param[0], param[1])
+  getAst(memoTemplate(n, nT, retType, e.name(), e.body()))
 
 export tables.`[]=`, tables.`[]`

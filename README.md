@@ -19,22 +19,36 @@ If you have access to the definition of `f`, one can do better with the `memoize
     proc f(a: A): B {.memoized.} =
       ...
 
-Then `f` will be memoized and self calls will be handled correctly. Even the macro, tough, cannot handle completely the case of mutual recursion.
+Then `f` will be memoized and recursive calls will be handled correctly (both direct self-recursion and mutual recursion).
 
 Example
 -------
 
     import memo
+
     proc fib(n : int) : int {.memoized.} =
-      if n < 2:
-        n
-      else:
-        fib(n-1) + fib(n-2)
+      if n < 2: n
+      else: fib(n-1) + fib(n-2)
 
     when isMainModule:
       echo fib(40)
 
-This small program returns very fast, while without the `memoized` pragma, it takes a few seconds before producing a result.
+This small program returns very fast, while without the `memoized` pragma, it takes a few seconds before producing a result. For an example of mutual recursive functions
+
+    import memo
+
+    proc fib(n : int) : int
+    
+    proc fib1(n : int) : int {.memoized.} =
+      if n < 2: n
+      else: fib(n-1) + fib(n-2)
+    
+    proc fib(n : int) : int {.memoized.} =
+      if n < 2: n
+      else: fib1(n-1) + fib1(n-2)
+
+    when isMainModule:
+      echo fib(80)
 
 Restrictions
 ------------
