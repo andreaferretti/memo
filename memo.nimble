@@ -1,7 +1,7 @@
 [Package]
 name          = "memo"
 version       = "0.1.1"
-author        = "Andrea Ferretti"
+author        = "wiffel"
 description   = "Memoize Nim functions"
 license       = "Apache2"
 
