@@ -1,6 +1,8 @@
 Memoize Nim functions
 =====================
 
+[![Build Status](https://travis-ci.org/andreaferretti/memo.svg?branch=master)](https://travis-ci.org/andreaferretti/memo)
+
 This small package offers a function and a macro to memoize Nim functions.
 
 Usage
@@ -45,11 +47,11 @@ This small program returns very fast, while without the `memoized` pragma, it ta
 import memo
 
 proc fib(n : int) : int
-    
+
 proc fib1(n : int) : int {.memoized.} =
   if n < 2: n
   else: fib(n-1) + fib(n-2)
-    
+
 proc fib(n : int) : int {.memoized.} =
   if n < 2: n
   else: fib1(n-1) + fib1(n-2)
