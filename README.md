@@ -2,6 +2,7 @@ Memoize Nim functions
 =====================
 
 [![Build Status](https://travis-ci.org/andreaferretti/memo.svg?branch=master)](https://travis-ci.org/andreaferretti/memo)
+[![nimble](https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble_js.png)](https://github.com/yglukhov/nimble-tag)
 
 This small package offers a function and a macro to memoize Nim functions.
 
