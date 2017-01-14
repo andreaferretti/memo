@@ -12,9 +12,9 @@ proc memoize*[A, B](f: proc(a: A): B): proc(a: A): B =
 
   return g
 
-macro memoized*(e: expr): stmt =
+macro memoized*(e: untyped): auto =
 
-  template memoTemplate(n, nT, retType, procName, procBody : expr): stmt =
+  template memoTemplate(n, nT, retType, procName, procBody : untyped): auto =
     var cache = initTable[nT,retType]()
     when not declared(procName):
       proc procName(n : nT) : retType
