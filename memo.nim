@@ -1,19 +1,18 @@
 import tables, macros
 
+
 proc memoize*[A, B](f: proc(a: A): B): proc(a: A): B =
   var cache = initTable[A, B]()
 
-  proc g(a: A): B =
-    if cache.hasKey(a): return cache[a]
+  result = proc(a: A): B =
+    if cache.hasKey(a):
+      result = cache[a]
     else:
-      let b = f(a)
-      cache[a] = b
-      return b
+      result = f(a)
+      cache[a] = result
 
-  return g
 
 macro memoized*(e: untyped): auto =
-
   template memoTemplate(n, nT, retType, procName, procBody : untyped): auto =
     var cache = initTable[nT,retType]()
     when not declared(procName):
