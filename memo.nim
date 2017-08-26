@@ -26,7 +26,7 @@ macro memoized*(e: untyped): auto =
     type procType = proc(n : nT) : retType
     template resetCache(p) =
       when p == procName:
-        cache = initTable[nT,retType]()
+        cache.clear()
 
   let
     retType = e.params()[0]
