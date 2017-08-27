@@ -64,8 +64,8 @@ when isMainModule:
 Restrictions
 ------------
 
-* one can only memoize functions of a single argument, altough one can convert any function in this form by using a tuple argument
-* the argument type has to implement ``hash``, since it will be used as key in a hashtable
+* `memoize` function, as opposed to `memoized` macro, can only memoize functions of a single argument, altough one can convert any function in this form by using a tuple argument
+* types of all arguments have to implement ``hash``, since they will be used as parts of a key in a hashtable
 
 An example of the first issue would be memoizing the Levenshtein distance for strings, as it is a function of two arguments. It can be done like this:
 
@@ -76,17 +76,20 @@ template tail(s: string): string = s[1 .. s.high]
 
 template head(s: string): char = s[0]
 
-proc lev(t: tuple[a, b: string]): int {.memoized.} =
-  let (a, b) = t
+# `memoized` macro handles multiple arguments:
+proc lev(a: string, b: string): int {.memoized.} =
   if a.len == 0: return b.len
   if b.len == 0: return a.len
   let
-    d1 = lev((a.tail, b)) + 1
-    d2 = lev((a, b.tail)) + 1
-    d3 = lev((a.tail, b.tail)) + (if a.head == b.head: 0 else: 1)
-  return min(min(d1, d2), d3)
+    d1 = lev(a.tail, b) + 1
+    d2 = lev(a, b.tail) + 1
+    d3 = lev(a.tail, b.tail) + (if a.head == b.head: 0 else: 1)
+  result = min(min(d1, d2), d3)
 
-proc levenshtein(a, b: string): int = lev((a, b))
+# `memoize` function does not:
+template memTwoArg =
+  let levMem: proc(int): int = memoize(lev)
+assert: not compiles memTwoArg
 
 when isMainModule:
   echo levenshtein("submarine", "subreddit")
