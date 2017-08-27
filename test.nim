@@ -24,6 +24,27 @@ proc fib1(n : int) : int {.memoized.} =
   if n < 2: n
   else: fib2(n-1) + fib2(n-2)
 
+proc xib_tup(tup: (int, int)) : int {.memoized.} =
+  let (x, n) = tup
+  if n < x-1:
+    result = 0
+  elif n == x-1:
+    result = 1
+  else:
+    result = 0
+    for i in 1 .. x:
+      result += xib_tup((x, n-i))
+
+proc xib(x, n: int) : int {.memoized.} =
+  if n < x-1:
+    result = 0
+  elif n == x-1:
+    result = 1
+  else:
+    result = 0
+    for i in 1 .. x:
+      result += xib(x, n-i)
+
 var x  = 0
 proc impure(y: int): int {.memoized.} =
   x += y
@@ -47,3 +68,6 @@ suite "memoization":
     for y in 1 .. 10:
       discard impure(y)
     check x == 110
+
+  test "multiple-arguments recursive function memoization":
+    check xib_tup((3, 10)) == xib(3, 10)
