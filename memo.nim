@@ -150,7 +150,7 @@ macro memoized*(e: untyped): auto =
   fun.body = getAst(funImpl(mem, cache.sym, mem.name, packSym, nams))
   fun.body.add(newAssignment(
                  ident("result"),
-                 newCall(!"[]", cache.sym, nams)))
+                 newCall("[]".toNimIdent, cache.sym, nams)))
 
   # return cache and its owner procedure
   result = newStmtList(cache.decl, fun, cache.reset)

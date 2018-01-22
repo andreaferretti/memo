@@ -1,10 +1,10 @@
-version       = "0.2.0"
+version       = "0.2.1"
 author        = "wiffel"
 description   = "Memoize Nim functions"
 license       = "Apache2"
 skipFiles     = @["test", "test.nim"]
 
-requires "nim >= 0.11.2"
+requires "nim >= 0.17.3"
 
 task test, "run memo tests":
   --hints: off
