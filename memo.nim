@@ -69,9 +69,8 @@ proc declCache(owner, argType, retType: NimNode): OwnedCache =
   result.decl = getAst(cacheImpl(result.sym, argType, retType))
 
   template declResetCache(cacheName, owner) =
-    template resetCache(ow) =
-      when ow == owner:
-        cacheName.clear()
+    template `resetCache owner`() =
+      cacheName.clear()
   result.reset = getAst(declResetCache(result.sym, owner.name))
 
 

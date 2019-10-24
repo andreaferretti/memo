@@ -64,7 +64,7 @@ suite "memoization":
     for y in 1 .. 10:
       discard impure(y)
     check x == 55
-    resetCache(impure)
+    resetCacheImpure()
     for y in 1 .. 10:
       discard impure(y)
     check x == 110

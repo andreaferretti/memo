@@ -1,4 +1,4 @@
-version       = "0.2.2"
+version       = "0.3.0"
 author        = "wiffel"
 description   = "Memoize Nim functions"
 license       = "Apache2"
@@ -14,6 +14,7 @@ task test, "run memo tests":
   --debuginfo
   --path: "."
   --run
+  --define:memoDebug
   setCommand "c", "test.nim"
 
 task tests, "run memo tests":

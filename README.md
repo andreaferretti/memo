@@ -16,9 +16,13 @@ import memo
 let g = memoize(f)
 ```
 
-`g` will then be equivalent to `f` (modulo side effects), but results of calling `g` will be cached. The function `memoize` can be used on any function, but will not handle correctly recursive functions, as self calls of `f`, both direct and indirect, will still keep refering to the non-memoize version of `f`.
+`g` will then be equivalent to `f` (modulo side effects), but results of calling `g`
+will be cached. The function `memoize` can be used on any function, but will not
+handle correctly recursive functions, as self calls of `f`, both direct and indirect,
+will still keep refering to the non-memoize version of `f`.
 
-If you have access to the definition of `f`, one can do better with the `memoized` macro. Usage is as follows:
+If you have access to the definition of `f`, one can do better with the `memoized`
+macro. Usage is as follows:
 
 ```nim
 import memo
@@ -26,7 +30,8 @@ proc f(a: A): B {.memoized.} =
   ...
 ```
 
-Then `f` will be memoized and recursive calls will be handled correctly (both direct self-recursion and mutual recursion).
+Then `f` will be memoized and recursive calls will be handled correctly (both
+direct self-recursion and mutual recursion).
 
 Example
 -------
@@ -42,7 +47,8 @@ when isMainModule:
   echo fib(40)
 ```
 
-This small program returns very fast, while without the `memoized` pragma, it takes a few seconds before producing a result. For an example of mutual recursive functions
+This small program returns very fast, while without the `memoized` pragma, it takes
+a few seconds before producing a result. For an example of mutual recursive functions
 
 ```nim
 import memo
@@ -64,10 +70,14 @@ when isMainModule:
 Restrictions
 ------------
 
-* `memoize` function, as opposed to `memoized` macro, can only memoize functions of a single argument, altough one can convert any function in this form by using a tuple argument
-* types of all arguments have to implement ``hash``, since they will be used as parts of a key in a hashtable
+* `memoize` function, as opposed to `memoized` macro, can only memoize functions
+  of a single argument, altough one can convert any function in this form by using
+  a tuple argument
+* types of all arguments have to implement ``hash``, since they will be used as
+  parts of a key in a hashtable
 
-An example of the first issue would be memoizing the Levenshtein distance for strings, as it is a function of two arguments. It can be done like this:
+An example of the first issue would be memoizing the Levenshtein distance for
+strings, as it is a function of two arguments. It can be done like this:
 
 ```nim
 import memo
@@ -94,3 +104,23 @@ assert: not compiles memTwoArg
 when isMainModule:
   echo levenshtein("submarine", "subreddit")
 ```
+
+Resetting the cache
+-------------------
+
+The `{.memoized.}` macro also generates a function that can be used to reset the
+cache where previous results are stored. If `name` is the name of the function,
+the auxiliary function to reset the cache is called `resetCacheName`.
+
+Thus, you can do the following
+```nim
+proc fib(n : int) : int {.memoized.} =
+  if n < 2: n
+  else: fib(n-1) + fib(n-2)
+
+echo fib(40)
+resetCacheFib()
+echo fib(50)
+```
+
+This allows to avoid memory leaks by accumulating too many values in the cache.
