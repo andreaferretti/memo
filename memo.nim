@@ -1,5 +1,5 @@
 import tables, macros
-
+export tables # `Table` cannot be found for some reason, though `initTable` can: line 144
 
 proc memoize*[A, B](f: proc(a: A): B): proc(a: A): B =
   ## Returns a memoized version of the given procedure.
@@ -109,7 +109,7 @@ macro memoized*(e: untyped): auto =
   let nams = args.toIdents()
   let atyp = args.toTypes()
 
-  let cache = declCache(e, atyp, retType)
+  #let cache = declCache(e, atyp, retType)
 
   # version results from which results will be memoized
   let mem = newProc(name = genSym(nskProc, "memoized"))
@@ -139,20 +139,23 @@ macro memoized*(e: untyped): auto =
   fun.params = e.params.copy
 
   # build tuple, check it in cache and optionally calculate
-  template funImpl(impl, cache, fun, lhs, rhs) =
+  template funImpl(impl, fun, lhs, rhs, argType, retType) {.dirty.} =
+    var cache {.global.}: Table[argType,retType]
+    if len(cache) == 0: cache = initTable[argType,retType]()
     impl
     let lhs = rhs
     if not cache.hasKey(lhs):
       cache[lhs] = fun(lhs)
 
   let packSym = genSym(nskLet, "pack")
-  fun.body = getAst(funImpl(mem, cache.sym, mem.name, packSym, nams))
+  fun.body = getAst(funImpl(mem, mem.name, packSym, nams, atyp, retType))
   fun.body.add(newAssignment(
                  ident("result"),
-                 newCall(ident("[]"), cache.sym, nams)))
+                 newCall(ident("[]"), ident("cache"), nams)))
 
   # return cache and its owner procedure
-  result = newStmtList(cache.decl, fun, cache.reset)
+  #result = newStmtList(cache.decl, fun, cache.reset)
+  result = newStmtList(fun)
 
 
 export tables.`[]=`, tables.`[]`
