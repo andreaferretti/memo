@@ -1,4 +1,4 @@
-version       = "0.3.0"
+version       = "0.4.0"
 author        = "wiffel"
 description   = "Memoize Nim functions"
 license       = "Apache2"

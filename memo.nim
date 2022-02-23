@@ -1,5 +1,4 @@
-import tables, macros
-
+import tables, macros, options
 
 proc memoize*[A, B](f: proc(a: A): B): proc(a: A): B =
   ## Returns a memoized version of the given procedure.
@@ -61,6 +60,8 @@ type OwnedCache = object
 proc declCache(owner, argType, retType: NimNode): OwnedCache =
   ## Declares a new cache with given argument type and return type.
   ## Returns cache symbol, cache declaration and cache reset proc.
+  ## For functions with arguments.
+  ## Cache is implemented as a Table that hashes tuples of arguments.
 
   result.sym = genSym(nskVar, "cache")
 
@@ -72,6 +73,24 @@ proc declCache(owner, argType, retType: NimNode): OwnedCache =
     template `resetCache owner`() =
       cacheName.clear()
   result.reset = getAst(declResetCache(result.sym, owner.name))
+
+
+proc declCacheNiladic(owner, argType, retType: NimNode): OwnedCache =
+  ## Declares a new cache with given argument type and return type.
+  ## Returns cache symbol, cache declaration and cache reset proc.
+  ## For functions with no arguments.
+  ## Cache is implemented as an Option.
+
+  result.sym = genSym(nskVar, "cache")
+
+  template cacheImpl(cache, retType) =
+    var cache: Option[retType] = none(retType)
+  result.decl = getAst(cacheImpl(result.sym, retType))
+
+  template declResetCache(cacheName, owner, retType) =
+    template `resetCache owner`() =
+      cacheName = none(retType)
+  result.reset = getAst(declResetCache(result.sym, owner.name, retType))
 
 
 proc destructurizedCall(fun, args: NimNode): NimNode =
@@ -109,30 +128,41 @@ macro memoized*(e: untyped): auto =
   let nams = args.toIdents()
   let atyp = args.toTypes()
 
-  let cache = declCache(e, atyp, retType)
+  let hasArgs = args.len > 0
+  let cache = if hasArgs:
+    declCache(e, atyp, retType)
+  else:
+    declCacheNiladic(e, atyp, retType)
 
   # version results from which results will be memoized
   let mem = newProc(name = genSym(nskProc, "memoized"))
-
-  # pack arguments into a tuple
-  let argSym = genSym(nskParam, "arg")
-  mem.params = newNimNode(nnkFormalParams).
-                 add(e.params[0]).
-                 add(newTree(nnkIdentDefs, argSym, atyp, newEmptyNode()))
+  mem.params = newNimNode(nnkFormalParams).add(e.params[0])
 
   # wrap original implementation
   let org = e.copy()
   org.name = genSym(nskProc, "impl")
 
-  let darg = nams.destrTupNode(argSym)
-  let dcall = org.name.destructurizedCall(nams)
+  mem.body = newStmtList().add(org)
 
-  # add implementation wrapping and argument destructurization
-  mem.body = newStmtList().
-               add(org).
-               add(darg).
-               add(newAssignment(ident("result"), dcall))
+  if hasArgs:
+    # pack arguments into a tuple
+    let argSym = genSym(nskParam, "arg")
+    mem.params.
+      add(newTree(nnkIdentDefs, argSym, atyp, newEmptyNode()))
 
+    let darg = nams.destrTupNode(argSym)
+    let dcall = org.name.destructurizedCall(nams)
+
+    # add implementation wrapping and argument destructurization
+    mem.body.
+      add(darg).
+      add(newAssignment(ident("result"), dcall))
+  else:
+    # add implementation wrapping
+    mem.body.
+      add(newAssignment(ident("result"),
+        newCall(org.name)
+      ))
 
   # main procedure implementation:
   let fun = newProc(name = e.name)
@@ -145,14 +175,25 @@ macro memoized*(e: untyped): auto =
     if not cache.hasKey(lhs):
       cache[lhs] = fun(lhs)
 
-  let packSym = genSym(nskLet, "pack")
-  fun.body = getAst(funImpl(mem, cache.sym, mem.name, packSym, nams))
-  fun.body.add(newAssignment(
-                 ident("result"),
-                 newCall(ident("[]"), cache.sym, nams)))
+  # check if cache has some and optionally calculate
+  template funImplNiladic(impl, cache, fun) =
+    impl
+    if options.isNone(cache):
+      cache = some(fun())
+
+  if hasArgs:
+    let packSym = genSym(nskLet, "pack")
+    fun.body = getAst(funImpl(mem, cache.sym, mem.name, packSym, nams))
+    fun.body.add(newAssignment(
+                   ident("result"),
+                   newCall(ident("[]"), cache.sym, nams)))
+  else:
+    fun.body = getAst(funImplNiladic(mem, cache.sym, mem.name))
+    fun.body.add(newAssignment(
+                   ident("result"),
+                   newCall(ident("get"), cache.sym)))
 
   # return cache and its owner procedure
   result = newStmtList(cache.decl, fun, cache.reset)
 
-
-export tables.`[]=`, tables.`[]`
+export tables.`[]=`, tables.`[]`, options.`get`
