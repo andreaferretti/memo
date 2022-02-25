@@ -50,6 +50,11 @@ proc impure(y: int): int {.memoized.} =
   x += y
   return x
 
+proc niladic: int {.memoized.} =
+  var i {.global.} = 0
+  i+=1
+  result = i
+
 suite "memoization":
   test "recursive function memoization":
     check fastFib(40) == fib(40)
@@ -71,3 +76,6 @@ suite "memoization":
 
   test "multiple-arguments recursive function memoization":
     check xib_tup((3, 10)) == xib(3, 10)
+
+  test "function without arguments":
+    check niladic() == niladic() and niladic() == 1
